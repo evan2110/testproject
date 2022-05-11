@@ -1,0 +1,256 @@
+//------------- Khai báo và thêm các thư viện------------
+
+//------------- Định nghĩa chân cổng ----------------
+
+#define segA 2
+#define segB 3
+#define segC 4
+#define segD 5
+#define segE 6
+#define segF 7
+#define segG 8
+#define led1 9
+#define led2 10
+#define r1 13
+#define r2 12
+#define r3 A0
+#define r4 A1
+
+#define c1 A2
+#define c2 A3
+#define c3 A4
+#define c4 A5
+
+//------------- Khai báo biến toàn cục --------------
+int t0 = 0;
+int t1 = 0;
+int s = 0;
+int code_matrix = 0;
+ISR (TIMER1_OVF_vect) 
+{
+    TCNT1 = 40536;
+    code_matrix = matrix_button();
+}
+//------------- Chương trình setup, cài đặt thông số ban đầu--------
+void setup()
+{
+  pinMode(segA, OUTPUT);
+  pinMode(segB, OUTPUT);
+  pinMode(segC, OUTPUT);
+  pinMode(segD, OUTPUT);
+  pinMode(segE, OUTPUT);
+  pinMode(segF, OUTPUT);
+  pinMode(segG, OUTPUT);
+  
+  pinMode(led1, OUTPUT);
+  pinMode(led2, OUTPUT);
+  t0 = millis();
+  
+  // hàng là đầu ra
+  pinMode(r1, OUTPUT);
+  pinMode(r2, OUTPUT);
+  pinMode(r3, OUTPUT);
+  pinMode(r4, OUTPUT);
+  
+  // cột là đầu vào
+  pinMode(c1, INPUT_PULLUP);
+  pinMode(c2, INPUT_PULLUP);
+  pinMode(c3, INPUT_PULLUP);
+  pinMode(c4, INPUT_PULLUP);
+  
+  Serial.begin(9600);
+    ///cai dat timer
+  cli();                                // tắt ngắt toàn cục
+    
+  /* Reset Timer/Counter1 */
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TIMSK1 = 0;
+    
+  /* Setup Timer/Counter1 */
+  TCCR1B |= (1 << CS11) | (1 << CS10);  // prescale = 64
+  TCNT1 = 40536;
+  TIMSK1 = (1 << TOIE1);                // Overflow interrupt enable 
+  sei();                                // cho phép ngắt toàn cục
+  
+}
+
+//------------- Chương trình chính ---------------
+void loop()
+{
+
+  //----- B1: Thu thập dữ liệu
+  //int code_matrix = matrix_button();
+  //----- B2: Xử lý dữ liệu
+  
+  //----- B3: Điều khiển đầu ra
+  t1 = millis();
+  if(t1 - t0 >= 1000) {
+    t0 = t1;
+    s++;
+  }
+  led7seg2(code_matrix);
+  //Serial.print("*mode");
+  //Serial.print(code_matrix);
+  //Serial.println("/");
+  //if(s == 100) s = 0;
+  if(code_matrix == 0) Serial.print("*mode0/");
+  if(code_matrix == 1) Serial.print("*mode1/");
+  if(code_matrix == 2) Serial.print("*mode2/");
+  if(code_matrix == 3) Serial.print("*mode3/");
+  if(code_matrix == 4) Serial.print("*mode4/");
+  if(code_matrix == 5) Serial.print("*mode5/");
+  if(code_matrix == 6) Serial.print("*mode6/");
+  if(code_matrix == 7) Serial.print("*mode7/");
+  if(code_matrix == 8) Serial.print("*mode8/");
+  if(code_matrix == 9) Serial.print("*mode9/");
+  
+  
+ 
+  
+}
+int matrix_button() {
+  int x = 255;
+  
+  //B1: Bật hàng 1 giá trị 0, quét các cột
+  digitalWrite(r1, 0);digitalWrite(r2, 1);digitalWrite(r3, 1);digitalWrite(r4, 1);
+  
+  if(digitalRead(c1) == 0) x = 1;
+  if(digitalRead(c2) == 0) x = 2;
+  if(digitalRead(c3) == 0) x = 3;
+  if(digitalRead(c4) == 0) x = 'A';
+
+  digitalWrite(r1, 1);digitalWrite(r2, 0);digitalWrite(r3, 1);digitalWrite(r4, 1);
+  if(digitalRead(c1) == 0) x = 4;
+  if(digitalRead(c2) == 0) x = 5;
+  if(digitalRead(c3) == 0) x = 6;
+  if(digitalRead(c4) == 0) x = 'B';
+  
+  digitalWrite(r1, 1);digitalWrite(r2, 1);digitalWrite(r3, 0);digitalWrite(r4, 1);
+  if(digitalRead(c1) == 0) x = 7;
+  if(digitalRead(c2) == 0) x = 8;
+  if(digitalRead(c3) == 0) x = 9;
+  if(digitalRead(c4) == 0) x = 'C';
+  
+  digitalWrite(r1, 1);digitalWrite(r2, 1);digitalWrite(r3, 1);digitalWrite(r4, 0);
+  if(digitalRead(c1) == 0) x = '*';
+  if(digitalRead(c2) == 0) x = 0;
+  if(digitalRead(c3) == 0) x = '#';
+  if(digitalRead(c4) == 0) x = 'D';
+  return x;
+}
+//----- Chương trình con
+void led7seg2(int x){
+  digitalWrite(led1, 0);
+  digitalWrite(led2, 1);
+  led7seg(x/10);
+  delay(5);
+  digitalWrite(led1, 1);
+  digitalWrite(led2, 0);
+  led7seg(x%10);
+  delay(5);
+}
+void led7seg(int x)
+{
+  
+  // số 0
+  if(x == 0) {
+    digitalWrite(segA, 0);  
+    digitalWrite(segB, 0);  
+    digitalWrite(segC, 0);  
+    digitalWrite(segD, 0);  
+    digitalWrite(segE, 0);  
+    digitalWrite(segF, 0);  
+    digitalWrite(segG, 1);
+  }
+  // số 1
+  if(x == 1) {
+  	digitalWrite(segA, 1);
+  	digitalWrite(segB, 0);
+  	digitalWrite(segC, 0);
+  	digitalWrite(segD, 1);
+  	digitalWrite(segE, 1);
+  	digitalWrite(segF, 1);
+  	digitalWrite(segG, 1);
+  }
+  if(x == 2) {
+  // số 2
+  	digitalWrite(segA, 0);
+  	digitalWrite(segB, 0);
+  	digitalWrite(segC, 1);
+  	digitalWrite(segD, 0);
+  	digitalWrite(segE, 0);
+  	digitalWrite(segF, 1);
+  	digitalWrite(segG, 0);
+  }
+  // số 3
+  if(x == 3) {
+  	digitalWrite(segA, 0);
+  	digitalWrite(segB, 0);
+  	digitalWrite(segC, 0);
+  	digitalWrite(segD, 0);
+  	digitalWrite(segE, 1);
+  	digitalWrite(segF, 1);
+  	digitalWrite(segG, 0);
+  }
+  // số 4
+  if(x == 4) {
+  	digitalWrite(segA, 1);
+  	digitalWrite(segB, 0);
+  	digitalWrite(segC, 0);
+  	digitalWrite(segD, 1);
+  	digitalWrite(segE, 1);
+  	digitalWrite(segF, 0);
+  	digitalWrite(segG, 0);
+  }
+  // số 5
+  if(x == 5) {
+  	digitalWrite(segA, 0);
+  	digitalWrite(segB, 1);
+  	digitalWrite(segC, 0);
+  	digitalWrite(segD, 0);
+  	digitalWrite(segE, 1);
+  	digitalWrite(segF, 0);
+  	digitalWrite(segG, 0);
+  }
+  // số 6
+  if(x == 6) {
+  	digitalWrite(segA, 0);
+  	digitalWrite(segB, 1);
+  	digitalWrite(segC, 0);
+  	digitalWrite(segD, 0);
+  	digitalWrite(segE, 0);
+  	digitalWrite(segF, 0);
+  	digitalWrite(segG, 0);
+  }
+  // số 7
+  if(x == 7) {
+  	digitalWrite(segA, 0);
+  	digitalWrite(segB, 0);
+  	digitalWrite(segC, 0);
+  	digitalWrite(segD, 1);
+  	digitalWrite(segE, 1);
+  	digitalWrite(segF, 1);
+  	digitalWrite(segG, 1);
+  }
+  // số 8
+  if(x == 8) {
+  	digitalWrite(segA, 0);
+  	digitalWrite(segB, 0);
+  	digitalWrite(segC, 0);
+  	digitalWrite(segD, 0);
+  	digitalWrite(segE, 0);
+  	digitalWrite(segF, 0);
+  	digitalWrite(segG, 0);
+  }
+  // số 9
+  if(x == 9) {
+  	digitalWrite(segA, 0);
+  	digitalWrite(segB, 0);
+  	digitalWrite(segC, 0);
+  	digitalWrite(segD, 0);
+  	digitalWrite(segE, 1);
+  	digitalWrite(segF, 0);
+  	digitalWrite(segG, 0);
+  }
+}
